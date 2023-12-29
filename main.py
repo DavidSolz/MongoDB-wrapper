@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     ############################################
 
-        # Example: Verify user
+        # Login
         result = database.login( 3, 'JohnSmith01!')
         isConnected = result["success"]
 
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     ############################################
 
-        # Example: Verify user
+        # Logout
         result = database.logout()
         isConnected = result["success"]
 
