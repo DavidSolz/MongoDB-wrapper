@@ -108,10 +108,11 @@ Returns:
 
 ## Connection Management
 
-### `open_connection(self, url: str) -> dict`
+### `open_connection(self, db_name, url: str) -> dict`
 
 Open connection to the MongoDB database.
 
+- `db_name`: MongoDB database name.
 - `url` (str): MongoDB connection string.
 
 Returns:
