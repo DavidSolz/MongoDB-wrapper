@@ -72,8 +72,11 @@ class SecureMongoDB:
         try:
 
             if self.client.is_connected is False:
-                raise ValueError("Invalid connection.")
-            
+                raise ConnectionError("Invalid connection.")
+
+            if self.user_id == -1:
+                raise ValueError("User is not logged in. Operation requires authentication.")
+
             #Acquire users collection
             collection = self.db['users']
 
@@ -121,7 +124,14 @@ class SecureMongoDB:
         try:
 
             if self.client.is_connected is False:
-                raise ValueError("Invalid connection.")
+                raise ConnectionError("Invalid connection.")
+
+            if self.user_id == -1:
+                raise ValueError("User is not logged in. Operation requires authentication.")
+
+            if collection_name in ['users']:
+                self.logger.warning(f"Suspicious action takben by user {self.user_id}.")
+                raise ConnectionError
 
             collection = self.db[collection_name]
 
@@ -154,8 +164,11 @@ class SecureMongoDB:
         """
         
         try:
-            if not self.client.is_connected:
-                raise ValueError("Invalid connection.")
+            if self.client.is_connected is False:
+                raise ConnectionError("Invalid connection.")
+
+            if self.user_id == -1:
+                raise ValueError("User is not logged in. Operation requires authentication.")
 
             collection = self.db[collection_name]
 
@@ -203,10 +216,14 @@ class SecureMongoDB:
         try:
 
             if self.client.is_connected is False:
-                raise ValueError("Invalid connection.")
+                raise ConnectionError("Invalid connection.")
 
-            #Acquire user data
-            user_data = self.find_value('users', {'id' : id})['data']
+            collection = self.db['users']
+
+            if collection is None:
+                raise ValueError("Invalid value.")
+
+            user_data = collection.find_one({'id' : id})
 
             if user_data is None or 'salt' not in user_data or 'password' not in user_data:
                 raise ValueError("Invalid user data.")
@@ -241,6 +258,9 @@ class SecureMongoDB:
         """
 
         try:
+            if self.client.is_connected is False:
+                raise ConnectionError("Invalid connection.")
+
             # Check if a user is currently logged in
             if self.user_id == -1:
                 raise ValueError("No user is currently logged in.")
@@ -274,7 +294,10 @@ class SecureMongoDB:
         try:
 
             if self.client.is_connected is False:
-                raise ValueError("Invalid connection.")
+                raise ConnectionError("Invalid connection.")
+
+            if self.user_id == -1:
+                raise ValueError("User is not logged in. Operation requires authentication.")
 
             #Acquire users collection
             collection = self.db[collection_name]
@@ -308,7 +331,10 @@ class SecureMongoDB:
         try:
 
             if self.client.is_connected is False:
-                raise ValueError("Invalid connection.")
+                raise ConnectionError("Invalid connection.")
+
+            if self.user_id == -1:
+                raise ValueError("User is not logged in. Operation requires authentication.")
 
             # Check if the collection name is 'users'
             if collection_name in ['users']:
@@ -351,7 +377,7 @@ class SecureMongoDB:
         try:
 
             if self.client.is_connected is False:
-                raise ValueError("Invalid connection.")
+                raise ConnectionError("Invalid connection.")
 
             if self.user_id == -1:
                 raise ValueError("User is not logged in. Operation requires authentication.")
@@ -407,7 +433,7 @@ class SecureMongoDB:
         try:
 
             if self.client.is_connected is False:
-                raise ValueError("Invalid connection.")
+                raise ConnectionError("Invalid connection.")
 
             if self.user_id == -1:
                 raise ValueError("User is not logged in. Operation requires authentication.")
@@ -461,6 +487,9 @@ class SecureMongoDB:
         
         try:
 
+            if self.client.is_connected is False:
+                raise ConnectionError("Invalid connection.")
+
             if self.user_id == -1:
                 raise ValueError("User is not logged in. Operation requires authentication.")
 
@@ -487,7 +516,7 @@ class SecureMongoDB:
             return {"success": False, "error_message": str(e)}
 
    
-    def open_connection(self, url : str):
+    def open_connection(self, db_name, url : str):
 
         """
             Open connection to the MongoDB database.
@@ -508,7 +537,7 @@ class SecureMongoDB:
             # Check if the connection is successful by selecting the database
             self.client.server_info()
 
-            self.db = self.client[self.db_name]
+            self.db = self.client[db_name]
             self.logger.info("Connection to the database successful.")
 
             client_info = self.client._topology

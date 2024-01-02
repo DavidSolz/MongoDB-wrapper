@@ -8,9 +8,9 @@ if __name__ == "__main__":
     port = int(os.getenv('MONGODB_PORT', 27017))
     username = os.getenv('MONGODB_USERNAME', 'admin')
     password = os.getenv('MONGODB_PASSWORD', 'adminpassword')
+    db_name = os.getenv('MONGODB_DB_NAME', 'data')
 
     CONNECTION_STRING = f"mongodb://{username}:{password}@{host}:{port}"
-
 
     try:
 
@@ -25,15 +25,7 @@ if __name__ == "__main__":
     ############################################
 
         # Open connection
-        result = database.open_connection(CONNECTION_STRING)
-
-    ############################################
-
-
-    ############################################
-
-        # Create user
-        result = database.add_user(3, 'Anna', 'Smith', 'JohnSmith01!', True)
+        result = database.open_connection(db_name, CONNECTION_STRING)
 
     ############################################
 
@@ -41,7 +33,17 @@ if __name__ == "__main__":
 
         # Login
         result = database.login( 3, 'JohnSmith01!')
-        isConnected = result["success"]
+
+        if result['success'] is False:
+            raise ValueError("Result is invalid")
+        
+
+    ############################################
+
+    ############################################
+
+        # Create user, this should be done only by user who belongs to sudo group
+        result = database.add_user(4, 'Anna', 'Smith', 'JohnSmith01!', True)
 
     ############################################
 
