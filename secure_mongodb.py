@@ -10,7 +10,7 @@ import secrets
 
 class SecureMongoDB:
 
-    
+
 
     def __init__(self, secure_connection=False, hash_iter=1000, backupCount = 5):
 
@@ -103,7 +103,7 @@ class SecureMongoDB:
             self.logger.error(e)
             return {"success": False, "error_message": str(e)}
 
-    
+
 
     def find_value(self, collection_name : str, criteria : dict):
 
@@ -135,17 +135,19 @@ class SecureMongoDB:
             if collection is None:
                 raise ValueError("Invalid value.")
 
-            data = collection.find_one(criteria)
-            
+            data_cursor = collection.find_one(criteria)
+
+            data = [{k: v for k, v in document.items() if k != '_id'} for document in data_cursor]
+
             return {"success": True, "data": data}
         except Exception as e:
             self.logger.error(e)
             return {"success": False, "error_message": str(e)}
 
-    
+
 
     def find_values(self, collection_name: str, criteria: dict, limit : int = None, sort_by: str = None, sort_order: int = 1):
-        
+
         """
             Find multiple values in a MongoDB collection based on specified criteria.
 
@@ -159,7 +161,7 @@ class SecureMongoDB:
             Returns:
                 dict: Dictionary with the success status and, if successful, the formatted collection data.
         """
-        
+
         try:
             if self.client.is_connected is False:
                 raise ConnectionError("Invalid connection.")
@@ -172,17 +174,18 @@ class SecureMongoDB:
             if collection is None:
                 raise ValueError("Invalid value.")
 
-            data_cursor = collection.find(criteria).limit(limit) if limit is not None else collection.find(criteria)
-            
+            if not criteria:  # Check if criteria is empty
+                data_cursor = collection.find().limit(limit) if limit is not None else collection.find()
+            else:
+                data_cursor = collection.find(criteria).limit(limit) if limit is not None else collection.find()
+
             # Sort the data if sort_by is provided
             if sort_by is not None:
 
                 # Use sort_order to determine the sorting order (1 for ascending, -1 for descending)
                 data_cursor = data_cursor.sort(sort_by, sort_order)
 
-            
-            # Convert cursor to a list of dictionaries
-            data = list(data_cursor)
+            data = [{k: v for k, v in document.items() if k != '_id'} for document in data_cursor]
 
             formatted_collection = {
                 "name": collection_name,
@@ -195,8 +198,8 @@ class SecureMongoDB:
             self.logger.error(e)
             return {"success": False, "error_message": str(e)}
 
-    
-    
+
+
     def login(self, id, password : str):
 
         """
@@ -243,7 +246,7 @@ class SecureMongoDB:
             self.logger.error(e)
             return {"success": False, "error_message": str(e)}
 
-    
+
 
     def logout(self):
 
@@ -273,9 +276,9 @@ class SecureMongoDB:
             return {"success": False, "error_message": str(e)}
 
 
-    
+
     def insert_data(self, collection_name : str, columns : list, values : list):
-        
+
         """
             Insert data into a MongoDB collection.
 
@@ -287,7 +290,7 @@ class SecureMongoDB:
             Returns:
                 dict: Dictionary with the success status and, if successful, the inserted data ID.
         """
-        
+
         try:
 
             if self.client.is_connected is False:
@@ -312,7 +315,7 @@ class SecureMongoDB:
         except Exception as e:
             self.logger.error(e)
             return {"success": False, "error_message": str(e)}
-    
+
     def acquire_collection(self, collection_name : str):
 
         """
@@ -343,11 +346,15 @@ class SecureMongoDB:
             if collection is None:
                 raise ValueError("Collection does not exist.")
 
+            data_cursor = collection.find()
+
+            data = [{k: v for k, v in document.items() if k != '_id'} for document in data_cursor]
+
             # Format and return the collection, data from collection is parsed as {name, number of rows, array of records}
             formatted_collection = {
                 "name": collection_name,
                 "data_count": collection.count_documents({}),
-                "data" : list(collection.find())
+                "data" : data
             }
 
             return {"success": True, "data": formatted_collection}
@@ -413,7 +420,7 @@ class SecureMongoDB:
             return {"success": False, "error_message": str(e)}
 
     def modify_records(self, collection_name : str, conditions : dict, columns : list, values : list):
-        
+
         """
             Modify records in a MongoDB collection based on specified conditions.
 
@@ -426,7 +433,7 @@ class SecureMongoDB:
             Returns:
                 dict: Dictionary with the success status and, if successful, a message indicating the modification.
         """
-        
+
         try:
 
             if self.client.is_connected is False:
@@ -440,7 +447,7 @@ class SecureMongoDB:
 
             if collection is None:
                 raise ValueError("Invalid collection.")
-            
+
             # Check if given user is sudo group
             result = self.find_value('sudo_group', {"id" : self.user_id})
 
@@ -468,10 +475,10 @@ class SecureMongoDB:
             self.logger.error(e)
             return {"success": False, "error_message": str(e)}
 
-    
+
 
     def drop_collection(self, collection_name : str):
-        
+
         """
             Drop (delete) a MongoDB collection.
 
@@ -481,7 +488,7 @@ class SecureMongoDB:
             Returns:
                 dict: Dictionary with the success status and, if successful, None.
         """
-        
+
         try:
 
             if self.client.is_connected is False:
@@ -512,7 +519,7 @@ class SecureMongoDB:
             self.logger.error(e)
             return {"success": False, "error_message": str(e)}
 
-   
+
     def open_connection(self, db_name, url : str):
 
         """
@@ -545,14 +552,14 @@ class SecureMongoDB:
             return {"success": False, "error_message": str(e)}
 
     def close_connection(self):
-       
+
         """
             Close the connection to the MongoDB database.
 
             Returns:
                 dict: Dictionary with the success status and, if successful, a message indicating the closure.
         """
-       
+
         try:
             if self.client:
                 self.client.close()
