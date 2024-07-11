@@ -1,4 +1,4 @@
-# SecureMongoDB Class Documentation
+# Documentation
 
 The `SecureMongoDB` class is designed to provide a secure and flexible interface for interacting with a MongoDB database. It includes features for user authentication, data manipulation, and logging.
 
